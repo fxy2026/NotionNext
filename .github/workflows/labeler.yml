@@ -10,6 +10,8 @@ permissions:
 
 jobs:
   label:
+    # Keep upstream repository-maintenance automation out of user forks.
+    if: github.repository == 'notionnext-org/NotionNext'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/labeler@v7

@@ -24,6 +24,8 @@ concurrency:
 
 jobs:
   deploy:
+    # Forks keep their existing hosting; the upstream docs deployment is not inherited.
+    if: github.repository == 'notionnext-org/NotionNext'
     runs-on: ubuntu-latest
     permissions:
       contents: read
