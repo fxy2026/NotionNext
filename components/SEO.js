@@ -1,7 +1,8 @@
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { createSiteUrl, normalizeSiteUrl } from '@/lib/sitemap-utils'
-import { isHttpLink, loadExternalResource } from '@/lib/utils'
+import { isHttpLink } from '@/lib/utils'
+import { getWebFontUrls, loadWebFontStylesheets } from '@/lib/utils/webfont'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
@@ -22,35 +23,20 @@ const SEO = props => {
   let image
   const router = useRouter()
   const meta = getSEOMeta(props, router, useGlobal()?.locale)
-  const webFontUrl = siteConfig('FONT_URL')
-  const hasWebFontUrl = Array.isArray(webFontUrl)
-    ? webFontUrl.filter(Boolean).length > 0
-    : Boolean(webFontUrl)
+  // Compare URL values: JSON config parsing can create a new array on every render.
+  const webFontUrls = JSON.stringify(getWebFontUrls(siteConfig('FONT_URL')))
+  const hasWebFontUrl = webFontUrls !== '[]'
 
   useEffect(() => {
     if (!hasWebFontUrl) return
 
     const timeoutId = window.setTimeout(() => {
-      // 使用WebFontLoader字体加载
-      loadExternalResource(
-        'https://cdnjs.cloudflare.com/ajax/libs/webfont/1.6.28/webfontloader.js',
-        'js'
-      ).then(url => {
-        const WebFont = window?.WebFont
-        if (WebFont) {
-          // console.log('LoadWebFont', webFontUrl)
-          WebFont.load({
-            custom: {
-              // families: ['"LXGW WenKai"'],
-              urls: webFontUrl
-            }
-          })
-        }
-      })
+      // The configured CSS already declares the fonts; no loader script is needed.
+      loadWebFontStylesheets(JSON.parse(webFontUrls))
     }, 1500)
 
     return () => window.clearTimeout(timeoutId)
-  }, [hasWebFontUrl, webFontUrl])
+  }, [hasWebFontUrl, webFontUrls])
 
   // SEO关键词
   const KEYWORDS = siteConfig('KEYWORDS')
