@@ -37,8 +37,12 @@ const SideBarDrawer = ({
           element.getClientRects().length > 0
       )
 
-    const frame = requestAnimationFrame(() => {
-      ;(focusableElements()[0] || panel)?.focus({ preventScroll: true })
+    // Allow the open visibility state to paint before moving focus. Focusing
+    // during the opening frame can fail while the drawer is still hidden.
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        ;(focusableElements()[0] || panel)?.focus({ preventScroll: true })
+      })
     })
     const onKeyDown = event => {
       if (event.key === 'Escape') {
@@ -95,7 +99,7 @@ const SideBarDrawer = ({
         aria-label={ariaLabel}
         aria-hidden={!isOpen}
         tabIndex={-1}
-        className={`${isOpen ? 'mr-0 w-72 visible' : '-mr-72 max-w-side invisible'} bg-gray-50 right-0 top-0 dark:bg-hexo-black-gray shadow-black shadow-lg flex flex-col duration-300 fixed h-full overflow-y-scroll scroll-hidden z-30`}
+        className={`${isOpen ? 'mr-0 w-72 visible' : '-mr-72 max-w-side invisible'} bg-gray-50 right-0 top-0 dark:bg-hexo-black-gray shadow-black shadow-lg flex flex-col transition-[margin-right] duration-300 fixed h-full overflow-y-scroll scroll-hidden z-30`}
       >
         <div className='flex items-center justify-between px-4 pt-3 text-gray-700 dark:text-gray-200'>
           <span className='text-sm font-medium'>{ariaLabel}</span>

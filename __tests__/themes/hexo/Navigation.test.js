@@ -79,6 +79,49 @@ async function openMenu() {
 }
 
 describe('Hexo mobile navigation', () => {
+  it('waits for the open state to paint before moving focus', () => {
+    const frames = []
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => {
+      frames.push(callback)
+      return frames.length
+    })
+    render(<Header />)
+    const trigger = screen.getByRole('button', { name: '导航' })
+    trigger.focus()
+    fireEvent.click(trigger)
+    const dialog = screen.getByRole('dialog', { name: '导航' })
+    expect(trigger).toHaveFocus()
+    act(() => frames.shift()(0))
+    expect(trigger).toHaveFocus()
+    act(() => frames.shift()(16))
+    expect(
+      screen.getByRole('button', { name: 'Close navigation' })
+    ).toHaveFocus()
+  })
+
+  it('cancels delayed entry focus if the drawer closes between frames', () => {
+    let nextId = 0
+    const frames = new Map()
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => {
+      frames.set(++nextId, callback)
+      return nextId
+    })
+    jest
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(id => frames.delete(id))
+    render(<Header />)
+    const trigger = screen.getByRole('button', { name: '导航' })
+    trigger.focus()
+    fireEvent.click(trigger)
+    const first = frames.entries().next().value
+    frames.delete(first[0])
+    act(() => first[1](0))
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(frames.size).toBe(0)
+    expect(trigger).toHaveFocus()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
   it('exposes an accessible button and moves focus into the drawer', async () => {
     render(<Header />)
     expect(screen.getByRole('button', { name: '导航' })).toHaveAttribute(
