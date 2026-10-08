@@ -1,3 +1,4 @@
+/** @jest-environment node */
 import fs from 'fs'
 import { generateRss, shouldGenerateRssForLocale } from '@/lib/utils/rss'
 import { getPostBlocks } from '@/lib/db/SiteDataApi'
@@ -90,6 +91,8 @@ describe('generateRss', () => {
       latestPosts: [
         {
           id: 'post-1',
+          status: 'Published',
+          type: 'Post',
           slug: 'hello',
           title: 'Hello',
           summary: 'Summary',
@@ -121,5 +124,43 @@ describe('generateRss', () => {
     expect(
       shouldGenerateRssForLocale({ locale: 'en', defaultLocale: 'zh-CN' })
     ).toBe(false)
+  })
+})
+
+
+describe('RSS publication controls', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.spyOn(fs, 'statSync').mockImplementation(() => { throw new Error('ENOENT') })
+    jest.spyOn(fs, 'mkdirSync').mockImplementation(() => {})
+    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
+    getPostBlocks.mockResolvedValue(null)
+  })
+  afterEach(() => jest.restoreAllMocks())
+
+  const props = config => ({
+    NOTION_CONFIG: config,
+    siteInfo: { title: 'Synthetic', description: 'Test', link: 'https://example.com' },
+    latestPosts: [
+      { id: 'live', slug: 'live', type: 'Post', status: 'Published', publishDay: '2026-01-01' },
+      { id: 'hidden', slug: 'hidden', type: 'Post', status: 'Invisible', publishDay: '2026-01-01' }
+    ]
+  })
+
+  it('skips generation when RSS is disabled', async () => {
+    await generateRss(props({ ENABLE_RSS: false }))
+    expect(fs.writeFileSync).not.toHaveBeenCalled()
+    expect(getPostBlocks).not.toHaveBeenCalled()
+  })
+
+  it('only serializes eligible published posts', async () => {
+    await generateRss(props({ ENABLE_RSS: true }))
+    expect(addItemMock).toHaveBeenCalledTimes(1)
+    expect(addItemMock.mock.calls[0][0].link).toBe('https://example.com/live')
+  })
+
+  it('does not generate a new feed from unavailable source data', async () => {
+    await generateRss({ ...props({ ENABLE_RSS: true }), dataSourceStatus: 'unavailable' })
+    expect(fs.writeFileSync).not.toHaveBeenCalled()
   })
 })

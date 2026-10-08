@@ -1,3 +1,4 @@
+import { isBodyPaused, pausedPostMetadata, sanitizePublicData } from '@/lib/site/protectedPosts'
 import BLOG from '@/blog.config'
 import { getDataFromCache } from '@/lib/cache/cache_manager'
 import { siteConfig } from '@/lib/config'
@@ -40,7 +41,7 @@ export async function getStaticProps({ params: { keyword, page }, locale }) {
   props.page = page
   delete props.allPages
   return {
-    props,
+    props: sanitizePublicData(props),
     revalidate: process.env.EXPORT
       ? undefined
       : siteConfig(
@@ -114,8 +115,15 @@ async function filterByMemCache(allPosts, keyword) {
     keyword = keyword.trim()
   }
   for (const post of allPosts) {
+    if (isBodyPaused(post)) {
+      const metadata = pausedPostMetadata(post.id, post)
+      const publicText = [metadata.title, metadata.summary, metadata.category, metadata.tags]
+        .flat().filter(Boolean).join(' ').toLowerCase()
+      if (publicText.includes(String(keyword || '').toLowerCase())) filterPosts.push(metadata)
+      continue
+    }
     const cacheKey = getPageBlockCacheKey(post.id, post.lastEditedDate)
-    const page = await getDataFromCache(cacheKey, true)
+    const page = sanitizePublicData(await getDataFromCache(cacheKey, true))
     const tagContent =
       post?.tags && Array.isArray(post?.tags) ? post?.tags.join(' ') : ''
     const categoryContent =

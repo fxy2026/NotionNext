@@ -24,6 +24,7 @@ let windowTop = 0
  */
 const Header = props => {
   const searchDrawer = useRef()
+  const menuButton = useRef(null)
   const { tags, currentTag, categories, currentCategory } = props
   const { locale } = useGlobal()
   const router = useRouter()
@@ -32,12 +33,12 @@ const Header = props => {
   const showRandomButton = siteConfig('HEXO_MENU_RANDOM', false, CONFIG)
 
   const toggleMenuOpen = () => {
-    changeShow(!isOpen)
+    changeShow(open => !open)
   }
 
-  const toggleSideBarClose = () => {
+  const toggleSideBarClose = useCallback(() => {
     changeShow(false)
-  }
+  }, [])
 
   // 监听滚动
   useEffect(() => {
@@ -109,7 +110,8 @@ const Header = props => {
             <SmartLink
               href={'/category'}
               passHref
-              className='mb-3 text-gray-400 hover:text-black dark:text-gray-400 dark:hover:text-white hover:underline cursor-pointer'>
+              className='mb-3 text-gray-400 hover:text-black dark:text-gray-400 dark:hover:text-white hover:underline cursor-pointer'
+            >
               {locale.COMMON.MORE} <i className='fas fa-angle-double-right' />
             </SmartLink>
           </div>
@@ -130,7 +132,8 @@ const Header = props => {
             <SmartLink
               href={'/tag'}
               passHref
-              className='text-gray-400 hover:text-black  dark:hover:text-white hover:underline cursor-pointer'>
+              className='text-gray-400 hover:text-black  dark:hover:text-white hover:underline cursor-pointer'
+            >
               {locale.COMMON.MORE} <i className='fas fa-angle-double-right' />
             </SmartLink>
           </div>
@@ -152,7 +155,8 @@ const Header = props => {
         style={{ backdropFilter: 'blur(3px)' }}
         className={
           'top-0 duration-300 transition-all  shadow-none fixed bg-none dark:bg-hexo-black-gray dark:text-gray-200 text-black w-full z-20 transform border-transparent dark:border-transparent'
-        }>
+        }
+      >
         <div className='w-full flex justify-between items-center px-4 py-2'>
           <div className='flex'>
             <Logo {...props} />
@@ -164,15 +168,21 @@ const Header = props => {
               {' '}
               <MenuListTop {...props} />
             </div>
-            <div
+            <button
+              ref={menuButton}
+              type='button'
+              aria-label={locale.NAV.NAVIGATOR}
+              aria-controls='sidebar-drawer'
+              aria-expanded={isOpen}
               onClick={toggleMenuOpen}
-              className='w-8 justify-center items-center h-8 cursor-pointer flex lg:hidden'>
+              className='w-11 justify-center items-center h-11 cursor-pointer flex lg:hidden'
+            >
               {isOpen ? (
-                <i className='fas fa-times' />
+                <i aria-hidden='true' className='fas fa-times' />
               ) : (
-                <i className='fas fa-bars' />
+                <i aria-hidden='true' className='fas fa-bars' />
               )}
-            </div>
+            </button>
             {showSearchButton && <SearchButton />}
             {showRandomButton && <ButtonRandomPost {...props} />}
           </div>
@@ -180,7 +190,12 @@ const Header = props => {
       </div>
 
       {/* 折叠侧边栏 */}
-      <SideBarDrawer isOpen={isOpen} onClose={toggleSideBarClose}>
+      <SideBarDrawer
+        isOpen={isOpen}
+        onClose={toggleSideBarClose}
+        triggerRef={menuButton}
+        ariaLabel={locale.NAV.NAVIGATOR}
+      >
         <SideBar {...props} />
       </SideBarDrawer>
     </div>

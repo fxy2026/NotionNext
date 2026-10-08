@@ -1,3 +1,4 @@
+import { isBodyPaused, sanitizePublicData } from '@/lib/site/protectedPosts'
 import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
 import {
@@ -89,13 +90,13 @@ export async function getStaticProps(req) {
       siteConfig('POST_PREVIEW_CONCURRENCY', 5, props?.NOTION_CONFIG)
     )
     const previewTargets = props.posts.filter(
-      post => !post.password || post.password === ''
+      post => !isBodyPaused(post) && (!post.password || post.password === '')
     ).slice(0, POST_PREVIEW_MAX_COUNT)
     await Promise.all(
       previewTargets.map(post =>
         previewLimit(async () => {
           const rawBlockMap = await getPostBlocks(post.id, 'slug', POST_PREVIEW_LINES)
-          post.blockMap = adapterNotionBlockMap(rawBlockMap)
+          post.blockMap = adapterNotionBlockMap(sanitizePublicData(rawBlockMap))
           if (post.blockMap?.block) {
             post.blockMap.block = formatNotionBlock(post.blockMap.block)
           }
@@ -132,7 +133,7 @@ export async function getStaticProps(req) {
   delete props.allPages
 
   return {
-    props,
+    props: sanitizePublicData(props),
     revalidate: process.env.EXPORT
       ? undefined
       : siteConfig(

@@ -227,7 +227,7 @@ const SEO = props => {
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             generateStructuredData(meta, siteInfo, url, image, AUTHOR, LINK)
           )
         }}
@@ -249,6 +249,10 @@ const SEO = props => {
     </Head>
   )
 }
+
+// Escape HTML delimiters without changing the JSON data or its Unicode text.
+export const serializeJsonLd = data =>
+  JSON.stringify(data).replace(/</g, '\\u003c')
 
 /**
  * 生成结构化数据

@@ -1,3 +1,4 @@
+import { isBodyPaused } from '@/lib/site/protectedPosts'
 import BLOG from '@/blog.config'
 import useNotification from '@/components/Notification'
 import TechGrow from '@/components/TechGrow'
@@ -41,7 +42,7 @@ const Slug = props => {
    * @param {*} passInput
    */
   const validPassword = passInput => {
-    if (!post) {
+    if (!post || isBodyPaused(post)) {
       return false
     }
     const legacy = md5(String(post?.slug ?? '') + passInput)
@@ -69,6 +70,7 @@ const Slug = props => {
     }
 
     // 读取上次记录 自动提交密码
+    if (isBodyPaused(post)) return
     const passInputs = getPasswordQuery(router.asPath)
     if (passInputs.length > 0) {
       for (const passInput of passInputs) {
@@ -97,6 +99,14 @@ const Slug = props => {
 
   props = { ...props, lock, validPassword }
   const theme = siteConfig('THEME', BLOG.THEME, props.NOTION_CONFIG)
+  if (isBodyPaused(post)) {
+    return (
+      <main className='mx-auto max-w-2xl px-6 py-16'>
+        <h1>{post.title}</h1>
+        <p role='status'>这篇文章的正文暂时停止提供，待访问保护完善后恢复。</p>
+      </main>
+    )
+  }
   return (
     <>
       {/* 文章布局 */}

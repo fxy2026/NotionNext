@@ -19,12 +19,20 @@ const Hero = props => {
   const { locale } = useGlobal()
   const scrollToWrapper = () => {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-    window.scrollTo({ top: wrapperTop - 2 * rem, behavior: 'smooth' })
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+    window.scrollTo({
+      top: wrapperTop - 2 * rem,
+      behavior: reducedMotion ? 'auto' : 'smooth'
+    })
   }
 
   const GREETING_WORDS = siteConfig('GREETING_WORDS').split(',')
-  const GREETING_WORDS_TYPE_SPEED = Number(siteConfig('GREETING_WORDS_TYPE_SPEED')) || 200
-  const GREETING_WORDS_BACK_SPEED = Number(siteConfig('GREETING_WORDS_BACK_SPEED')) || 100
+  const GREETING_WORDS_TYPE_SPEED =
+    Number(siteConfig('GREETING_WORDS_TYPE_SPEED')) || 200
+  const GREETING_WORDS_BACK_SPEED =
+    Number(siteConfig('GREETING_WORDS_BACK_SPEED')) || 100
   useEffect(() => {
     updateHeaderHeight()
 
@@ -62,7 +70,8 @@ const Hero = props => {
     <header
       id='header'
       style={{ zIndex: 1 }}
-      className='w-full h-screen relative bg-black'>
+      className='hexo-home-hero w-full h-screen relative bg-black'
+    >
       <div className='text-white absolute bottom-0 flex flex-col h-full items-center justify-center w-full '>
         {/* 站点标题 */}
         <div className='font-bold text-4xl md:text-5xl shadow-text'>
@@ -79,15 +88,21 @@ const Hero = props => {
         )}
 
         {/* 滚动按钮 */}
-        <div
+        <button
+          type='button'
+          aria-label={locale.COMMON.START_READING}
           onClick={scrollToWrapper}
-          className='z-10 cursor-pointer w-full text-center py-4 text-3xl absolute bottom-10 text-white [text-shadow:0_0_0.1em_black,0_0_0.2em_black]'>
-          <div className='opacity-70 animate-bounce text-xs'> 
+          className='z-10 cursor-pointer w-full text-center py-4 text-3xl absolute bottom-10 text-white [text-shadow:0_0_0.1em_black,0_0_0.2em_black]'
+        >
+          <span className='block opacity-70 animate-bounce text-xs'>
             {siteConfig('HEXO_SHOW_START_READING', null, CONFIG) &&
               locale.COMMON.START_READING}
-          </div>
-          <i className='opacity-70 animate-bounce fas fa-angle-down' />
-        </div>
+          </span>
+          <i
+            aria-hidden='true'
+            className='opacity-70 animate-bounce fas fa-angle-down'
+          />
+        </button>
       </div>
 
       <LazyImage

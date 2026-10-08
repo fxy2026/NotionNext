@@ -1,3 +1,4 @@
+import { isBodyPaused, sanitizePublicData } from '@/lib/site/protectedPosts'
 import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
 import { fetchGlobalAllData, getPostBlocks } from '@/lib/db/SiteDataApi'
@@ -55,11 +56,11 @@ export async function getStaticProps({ params: { page }, locale }) {
   if (siteConfig('POST_LIST_PREVIEW', false, props?.NOTION_CONFIG)) {
     for (const i in props.posts) {
       const post = props.posts[i]
-      if (post.password && post.password !== '') {
+      if (isBodyPaused(post) || (post.password && post.password !== '')) {
         continue
       }
       const rawBlockMap = await getPostBlocks(post.id, 'slug', POST_PREVIEW_LINES)
-      post.blockMap = adapterNotionBlockMap(rawBlockMap)
+      post.blockMap = adapterNotionBlockMap(sanitizePublicData(rawBlockMap))
       if (post.blockMap?.block) {
         post.blockMap.block = formatNotionBlock(post.blockMap.block)
       }
@@ -68,7 +69,7 @@ export async function getStaticProps({ params: { page }, locale }) {
 
   delete props.allPages
   return {
-    props,
+    props: sanitizePublicData(props),
     revalidate: process.env.EXPORT
       ? undefined
       : siteConfig(

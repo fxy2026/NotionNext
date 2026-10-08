@@ -98,7 +98,9 @@ const LayoutBase = props => {
     <ThemeGlobalHexo.Provider value={{ searchModal }}>
       <div
         id='theme-hexo'
-        className={`${siteConfig('FONT_STYLE')} dark:bg-black scroll-smooth`}>
+        data-full-width={fullWidth ? 'true' : 'false'}
+        className={`${siteConfig('FONT_STYLE')} dark:bg-black scroll-smooth`}
+      >
         <Style />
 
         {/* 顶部导航 */}
@@ -114,24 +116,28 @@ const LayoutBase = props => {
           leave='transition ease-in-out duration-300 transform'
           leaveFrom='opacity-100'
           leaveTo='opacity-0 translate-y-16'
-          unmount={false}>
+          unmount={false}
+        >
           {headerSlot}
         </Transition>
 
         {/* 主区块 */}
         <main
           id='wrapper'
-          className={`${siteConfig('HEXO_HOME_BANNER_ENABLE', null, CONFIG) ? 'pt-0' : 'pt-16'} bg-hexo-background-gray dark:bg-black w-full md:px-8 lg:px-24 min-h-screen relative`}>
+          className={`${siteConfig('HEXO_HOME_BANNER_ENABLE', null, CONFIG) ? 'pt-0' : 'pt-16'} bg-hexo-background-gray dark:bg-black w-full md:px-8 lg:px-24 min-h-screen relative`}
+        >
           <div
             id='container-inner'
             className={
               (JSON.parse(siteConfig('LAYOUT_SIDEBAR_REVERSE'))
                 ? 'flex-row-reverse'
                 : '') +
-              ' w-full mx-auto lg:flex lg:space-x-4 justify-center relative z-10'
-            }>
+              ' w-full mx-auto lg:flex lg:gap-6 justify-center relative z-10'
+            }
+          >
             <div
-              className={`${className || ''} w-full ${fullWidth ? '' : 'max-w-4xl'} h-full overflow-hidden`}>
+              className={`${className || ''} hexo-main-column w-full ${fullWidth ? '' : 'max-w-4xl'} h-full overflow-hidden`}
+            >
               {showArticleSwitchPlaceholder ? (
                 <ArticleSwitchPlaceholder />
               ) : (
@@ -144,7 +150,8 @@ const LayoutBase = props => {
                   leave='transition ease-in-out duration-300 transform'
                   leaveFrom='opacity-100 translate-y-0'
                   leaveTo='opacity-0 -translate-y-16'
-                  unmount={false}>
+                  unmount={false}
+                >
                   {/* 主区上部嵌入 */}
                   {slotTop}
 
@@ -280,33 +287,33 @@ const LayoutSlug = props => {
   useEffect(() => {
     // 404
     if (!post) {
-      setTimeout(
-        () => {
-          if (isBrowser) {
-            const article = document.querySelector('#article-wrapper #notion-article')
-            if (!article) {
-              router.push('/404').then(() => {
-                console.warn('找不到页面', router.asPath)
-              })
-            }
+      setTimeout(() => {
+        if (isBrowser) {
+          const article = document.querySelector(
+            '#article-wrapper #notion-article'
+          )
+          if (!article) {
+            router.push('/404').then(() => {
+              console.warn('找不到页面', router.asPath)
+            })
           }
-        },
-        waiting404
-      )
+        }
+      }, waiting404)
     }
   }, [post])
   return (
     <>
-      <div className='w-full lg:hover:shadow lg:border rounded-t-xl lg:rounded-xl lg:px-2 lg:py-4 bg-white dark:bg-hexo-black-gray dark:border-black article'>
+      <div className='w-full lg:hover:shadow lg:border rounded-t-xl lg:rounded-xl lg:py-4 bg-white dark:bg-hexo-black-gray dark:border-black article'>
         {lock && <ArticleLock validPassword={validPassword} />}
 
         {!lock && post && (
-          <div className='overflow-x-auto flex-grow mx-auto md:w-full md:px-5 '>
+          <div className='overflow-x-auto flex-grow mx-auto w-full'>
             <article
               id='article-wrapper'
-              className='subpixel-antialiased overflow-y-hidden'>
+              className='subpixel-antialiased overflow-y-hidden'
+            >
               {/* Notion文章主体 */}
-              <section className='px-5 justify-center mx-auto max-w-2xl lg:max-w-full'>
+              <section className='hexo-article-body justify-center mx-auto'>
                 {post && <NotionPage post={post} />}
               </section>
 
@@ -346,7 +353,9 @@ const Layout404 = props => {
     // 延时3秒如果加载失败就返回首页
     setTimeout(() => {
       if (isBrowser) {
-        const article = document.querySelector('#article-wrapper #notion-article')
+        const article = document.querySelector(
+          '#article-wrapper #notion-article'
+        )
         if (!article) {
           router.push('/').then(() => {
             // console.log('找不到页面', router.asPath)
@@ -392,11 +401,13 @@ const LayoutCategoryIndex = props => {
                 key={category.name}
                 href={`/category/${category.name}`}
                 passHref
-                legacyBehavior>
+                legacyBehavior
+              >
                 <div
                   className={
                     ' duration-300 dark:hover:text-white px-5 cursor-pointer py-2 hover:text-indigo-400'
-                  }>
+                  }
+                >
                   <i className='mr-4 fas fa-folder' /> {category.name}(
                   {category.count})
                 </div>

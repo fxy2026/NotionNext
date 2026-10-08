@@ -1,6 +1,7 @@
 import BLOG from '@/blog.config'
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
-import { generateRss, shouldGenerateRssForLocale } from '@/lib/utils/rss'
+import { convertVal } from '@/lib/config'
+import { isPublishedPost } from '@/lib/site/publication'
 import { Feed } from 'feed'
 
 /**
@@ -26,7 +27,6 @@ function isCacheFresh() {
  */
 async function generateRssContent() {
   const locale = BLOG.LANG
-  const defaultLocale = BLOG.LANG
   const pageId = BLOG.NOTION_PAGE_ID
 
   // Parse the first (default) page ID for data fetching
@@ -36,15 +36,18 @@ async function generateRssContent() {
     : pageIds[0]
 
   const props = await fetchGlobalAllData({ from: 'rss-api', pageId: targetId, locale })
-  if (!props || !props.allPages) {
+  if (!props || !Array.isArray(props.allPages) || props.dataSourceStatus === 'unavailable') {
     return null
   }
 
   const { siteInfo, allPages, NOTION_CONFIG } = props
+  if (!convertVal(NOTION_CONFIG?.ENABLE_RSS ?? BLOG.ENABLE_RSS)) {
+    return { disabled: true }
+  }
 
   // Filter published posts only
   const latestPosts = allPages
-    .filter(p => p.type === 'Post' && p.status === 'Published')
+    .filter(isPublishedPost)
     .sort((a, b) => {
       const dateA = new Date(a.publishDay || a.publishDate || 0)
       const dateB = new Date(b.publishDay || b.publishDate || 0)
@@ -100,11 +103,17 @@ export default async function handler(req, res) {
   try {
     if (!isCacheFresh()) {
       const content = await generateRssContent()
-      if (content) {
-        rssCache = {
-          ...content,
-          updatedAt: Date.now()
-        }
+      if (content?.disabled) {
+        res.setHeader('Cache-Control', 'no-store')
+        return res.status(404).json({ message: 'RSS feed disabled' })
+      }
+      if (!content) {
+        res.setHeader('Cache-Control', 'no-store')
+        return res.status(503).json({ message: 'RSS feed not available' })
+      }
+      rssCache = {
+        ...content,
+        updatedAt: Date.now()
       }
     }
 

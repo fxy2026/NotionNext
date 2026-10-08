@@ -19,7 +19,8 @@ export const BlogPostCardInfo = ({
 }) => {
   return (
     <article
-      className={`flex flex-col justify-between lg:p-6 p-4 lg:px-8 px-6 ${showPageCover && !showPreview ? 'md:w-7/12 w-full md:max-h-60' : 'w-full'}`}>
+      className={`hexo-post-info flex flex-col justify-between ${showPageCover && !showPreview ? 'md:w-7/12 w-full' : 'w-full'}`}
+    >
       <div>
         <header>
           <h2>
@@ -27,9 +28,10 @@ export const BlogPostCardInfo = ({
             <SmartLink
               href={post?.href}
               passHref
-              className={`line-clamp-2 replace cursor-pointer text-2xl ${
+              className={`hexo-card-title line-clamp-2 replace cursor-pointer text-2xl ${
                 showPreview ? 'text-center' : ''
-              } leading-tight font-bold text-gray-600 dark:text-gray-100 hover:text-indigo-700 dark:hover:text-indigo-400`}>
+              } leading-tight font-bold text-gray-600 dark:text-gray-100 hover:text-indigo-700 dark:hover:text-indigo-400`}
+            >
               {siteConfig('POST_TITLE_ICON') && (
                 <NotionIcon icon={post.pageIcon} />
               )}
@@ -42,11 +44,13 @@ export const BlogPostCardInfo = ({
             <div
               className={`flex mt-2 items-center ${
                 showPreview ? 'justify-center' : 'justify-start'
-              } flex-wrap dark:text-gray-500 text-gray-400 `}>
+              } flex-wrap dark:text-gray-500 text-gray-400 `}
+            >
               <SmartLink
                 href={`/category/${post.category}`}
                 passHref
-                className='cursor-pointer font-light text-sm menu-link hover:text-indigo-700 dark:hover:text-indigo-400 transform'>
+                className='cursor-pointer font-light text-sm menu-link hover:text-indigo-700 dark:hover:text-indigo-400 transform'
+              >
                 <i className='mr-1 far fa-folder' />
                 {post.category}
               </SmartLink>
@@ -61,7 +65,7 @@ export const BlogPostCardInfo = ({
 
         {/* 摘要 */}
         {(!showPreview || showSummary) && !post.results && (
-          <main className='line-clamp-2 replace my-3 text-gray-700  dark:text-gray-300 text-md font-normal'>
+          <main className='hexo-card-summary line-clamp-2 replace my-3 text-gray-700  dark:text-gray-300 text-md font-normal'>
             {post.summary}
           </main>
         )}
@@ -85,12 +89,13 @@ export const BlogPostCardInfo = ({
 
       <div>
         {/* 日期标签 */}
-        <div className='text-gray-400 justify-between flex'>
+        <div className='hexo-card-meta text-gray-400 justify-between flex flex-wrap items-center gap-y-3'>
           {/* 日期 */}
           <SmartLink
             href={`/archive#${formatDateFmt(post?.publishDate, 'yyyy-MM')}`}
             passHref
-            className='font-light menu-link cursor-pointer text-sm leading-4 mr-3'>
+            className='font-light menu-link cursor-pointer text-sm leading-4 mr-3 shrink-0'
+          >
             <i className='far fa-calendar-alt mr-1' />
             {post?.publishDay || post.lastEditedDay}
           </SmartLink>

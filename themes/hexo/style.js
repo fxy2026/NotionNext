@@ -21,8 +21,16 @@ const Style = () => {
   const titleDark = siteConfig('HEXO_COLOR_TITLE_DARK', '#f3f4f6', CONFIG)
   const text = siteConfig('HEXO_COLOR_TEXT', '#374151', CONFIG)
   const textDark = siteConfig('HEXO_COLOR_TEXT_DARK', '#d1d5db', CONFIG)
-  const textSecondary = siteConfig('HEXO_COLOR_TEXT_SECONDARY', '#9ca3af', CONFIG)
-  const textSecondaryDark = siteConfig('HEXO_COLOR_TEXT_SECONDARY_DARK', '#6b7280', CONFIG)
+  const textSecondary = siteConfig(
+    'HEXO_COLOR_TEXT_SECONDARY',
+    '#9ca3af',
+    CONFIG
+  )
+  const textSecondaryDark = siteConfig(
+    'HEXO_COLOR_TEXT_SECONDARY_DARK',
+    '#6b7280',
+    CONFIG
+  )
   const border = siteConfig('HEXO_COLOR_BORDER', '#e5e7eb', CONFIG)
   const borderDark = siteConfig('HEXO_COLOR_BORDER_DARK', '#000000', CONFIG)
 
@@ -297,6 +305,167 @@ const Style = () => {
 
       ${themeConsoleStyle('hexo', CONFIG)}
 
+      /* Keep the existing palette and cover art; give long posts room to breathe. */
+      #theme-hexo #wrapper {
+        padding-right: clamp(0.75rem, 3vw, 3rem);
+        padding-left: clamp(0.75rem, 3vw, 3rem);
+      }
+
+      #theme-hexo #container-inner {
+        max-width: 76rem;
+      }
+
+      #theme-hexo .hexo-main-column {
+        min-width: 0;
+        flex: 1 1 0%;
+      }
+
+      #theme-hexo .hexo-article-body {
+        max-width: 50rem;
+        padding: 1.25rem 1rem;
+      }
+
+      #theme-hexo[data-full-width='true'] #container-inner,
+      #theme-hexo[data-full-width='true'] .hexo-article-body {
+        max-width: none;
+      }
+
+      #theme-hexo .hexo-article-body .notion {
+        font-size: clamp(1rem, 0.975rem + 0.125vw, 1.0625rem);
+        line-height: 1.85;
+      }
+
+      #theme-hexo .hexo-article-body .notion-h {
+        line-height: 1.45;
+        scroll-margin-top: 5rem;
+      }
+
+      #theme-hexo .hexo-article-body .notion-text {
+        padding-top: 0.35rem;
+        padding-bottom: 0.35rem;
+      }
+
+      #theme-hexo .hexo-article-body .notion-code {
+        line-height: 1.65;
+      }
+
+      #theme-hexo .hexo-post-hero,
+      #theme-hexo #article-header-cover {
+        min-height: 22rem;
+      }
+
+      #theme-hexo #article-header-cover {
+        padding: 5.5rem 1.25rem 2.5rem;
+      }
+
+      #theme-hexo .hexo-post-heading {
+        width: 100%;
+        max-width: 56rem;
+      }
+
+      #theme-hexo .hexo-post-title {
+        font-size: clamp(1.75rem, 3.6vw, 3rem);
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+        text-wrap: balance;
+      }
+
+      #theme-hexo .hexo-post-card {
+        min-width: 0;
+      }
+
+      #theme-hexo .hexo-post-info {
+        min-width: 0;
+        padding: 1.5rem;
+        gap: 1rem;
+      }
+
+      #theme-hexo .hexo-card-title {
+        font-size: clamp(1.25rem, 1rem + 0.6vw, 1.5rem);
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+
+      #theme-hexo .hexo-card-summary {
+        font-size: 0.9375rem;
+        line-height: 1.75;
+      }
+
+      #theme-hexo .hexo-card-meta {
+        font-size: 0.8125rem;
+        line-height: 1.5;
+      }
+
+      #theme-hexo .hexo-post-cover {
+        position: relative;
+        min-height: 12rem;
+      }
+
+      #theme-hexo .hexo-post-cover img {
+        display: block;
+        height: 12rem;
+      }
+
+      #theme-hexo .hexo-catalog-scroll {
+        max-height: min(55vh, 24rem);
+      }
+
+      #theme-hexo a:focus-visible,
+      #theme-hexo button:focus-visible {
+        outline: 2px solid var(--theme-color);
+        outline-offset: 4px;
+        border-radius: 0.25rem;
+      }
+
+      #theme-hexo #sidebar-drawer {
+        max-width: calc(100vw - 3rem);
+      }
+
+      @supports (height: 100svh) {
+        #theme-hexo .hexo-home-hero,
+        #theme-hexo .hexo-home-hero #header-cover {
+          height: 100svh;
+        }
+      }
+
+      @media (min-width: 720px) {
+        #theme-hexo .hexo-article-body {
+          padding: 1.5rem 2rem;
+        }
+
+        #theme-hexo .hexo-post-card {
+          min-height: 15rem;
+        }
+
+        #theme-hexo .hexo-post-cover img {
+          position: absolute;
+          inset: 0;
+          height: 100%;
+        }
+      }
+
+      @media (min-width: 960px) {
+        #theme-hexo #sideRight {
+          width: 17rem;
+          flex-shrink: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #theme-hexo {
+          scroll-behavior: auto;
+        }
+
+        #theme-hexo .animate-bounce {
+          animation: none;
+        }
+
+        #theme-hexo .hexo-post-cover img {
+          transition: none;
+          transform: none;
+        }
+      }
+
       #theme-hexo #home-nav-button a {
         color: #fff !important;
       }
@@ -304,7 +473,7 @@ const Style = () => {
       #theme-hexo #home-nav-button a:hover {
         color: #000 !important;
       }
-  `}</style>
+    `}</style>
   )
 }
 

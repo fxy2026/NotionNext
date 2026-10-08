@@ -22,12 +22,14 @@ const BlogPostCard = ({ index, post, showSummary, siteInfo }) => {
 
   return (
     <div
-      className={`${siteConfig('HEXO_POST_LIST_COVER_HOVER_ENLARGE', null, CONFIG) ? ' hover:scale-110 transition-all duration-150' : ''}`}>
+      className={`${siteConfig('HEXO_POST_LIST_COVER_HOVER_ENLARGE', null, CONFIG) ? ' hover:scale-110 transition-all duration-150' : ''}`}
+    >
       <div
         key={post.id}
         id='blog-post-card'
-        className={`group md:h-56 w-full flex justify-between md:flex-row flex-col-reverse shadow-sm ${siteConfig('HEXO_POST_LIST_IMG_CROSSOVER', null, CONFIG) && index % 2 === 1 ? 'md:flex-row-reverse' : ''}
-                    overflow-hidden border dark:border-black rounded-xl bg-white dark:bg-hexo-black-gray`}>
+        className={`hexo-post-card group w-full flex justify-between md:flex-row flex-col-reverse shadow-sm ${siteConfig('HEXO_POST_LIST_IMG_CROSSOVER', null, CONFIG) && index % 2 === 1 ? 'md:flex-row-reverse' : ''}
+                    overflow-hidden border dark:border-black rounded-xl bg-white dark:bg-hexo-black-gray`}
+      >
         {/* 文字内容 */}
         <BlogPostCardInfo
           index={index}
@@ -39,14 +41,14 @@ const BlogPostCard = ({ index, post, showSummary, siteInfo }) => {
 
         {/* 图片封面 */}
         {showPageCover && (
-          <div className='md:w-5/12 overflow-hidden'>
+          <div className='hexo-post-cover md:w-5/12 shrink-0 overflow-hidden'>
             <SmartLink href={post?.href}>
               <>
                 <LazyImage
                   priority={index === 1}
                   alt={post?.title}
                   src={post?.pageCoverThumbnail}
-                  className='h-56 w-full object-cover object-center group-hover:scale-110 duration-500'
+                  className='w-full object-cover object-center group-hover:scale-110 duration-500'
                 />
               </>
             </SmartLink>
