@@ -2,6 +2,7 @@
 
 import SEO, { serializeJsonLd } from '@/components/SEO'
 import { siteConfig } from '@/lib/config'
+import { JSDOM } from 'jsdom'
 import { HeadManagerContext } from 'next/dist/shared/lib/head-manager-context.shared-runtime'
 import { RouterContext } from 'next/dist/shared/lib/router-context.shared-runtime'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -52,12 +53,20 @@ const renderHead = ({ post, locale = 'en-US', site = siteInfo }) => {
 }
 
 const readJsonLd = html => {
-  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)]
-  expect(scripts).toHaveLength(1)
-  expect(scripts[0][0]).toMatch(/^<script type="application\/ld\+json">/)
-  // No HTML opening delimiter may remain anywhere inside the JSON-LD.
-  expect(scripts[0][1]).not.toContain('<')
-  return JSON.parse(scripts[0][1])
+  // Parse only: jsdom does not execute scripts or load subresources by default.
+  const dom = new JSDOM(html)
+  try {
+    const { document } = dom.window
+    const scripts = document.querySelectorAll('script')
+    expect(scripts).toHaveLength(1)
+    expect(scripts[0].type).toBe('application/ld+json')
+    expect(scripts[0].parentElement).toBe(document.head)
+    // No HTML opening delimiter may remain anywhere inside the JSON-LD.
+    expect(scripts[0].textContent).not.toContain('<')
+    return JSON.parse(scripts[0].textContent)
+  } finally {
+    dom.window.close()
+  }
 }
 
 beforeEach(() => {
@@ -158,6 +167,7 @@ describe('SEO JSON-LD serialization', () => {
   it.each([
     '</script><script data-jsonld-probe="true">void 0</script>',
     '</ScRiPt ><span data-jsonld-probe="true">中文 🧪</span>',
+    '</script\t\n bar><span data-jsonld-probe="true">中文</span>',
     '<!--<script>English & 中文</script>-->'
   ])('keeps HTML-like article text inside one JSON-LD script: %s', text => {
     const post = {
