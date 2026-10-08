@@ -1,0 +1,136 @@
+# Isolated, one-shot diagnostic. Do not merge this workflow into main.
+name: Native ARM64 diagnostic (f1a6b33)
+
+on:
+  push:
+    branches: [diagnostic/native-arm64-f1a6b33-20261008]
+    paths: ['.github/workflows/native-arm64-diagnostic.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-arm64-diagnostic-f1a6b33-20261008
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    name: Native ARM64 deps then full image
+    if: >-
+      github.repository == 'fxy2026/NotionNext' &&
+      github.ref == 'refs/heads/diagnostic/native-arm64-f1a6b33-20261008' &&
+      github.run_attempt == 1
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: f1a6b33a18ef312498a20429f3264be166b0cb11
+      NODE_IMAGE: node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+
+    steps:
+      - name: Check out exactly the failed commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # Same action commit as the failed run
+        timeout-minutes: 2
+        with:
+          ref: f1a6b33a18ef312498a20429f3264be166b0cb11
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify native architecture and immutable source
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          test "$RUNNER_ARCH" = ARM64
+          test "$(uname -m)" = aarch64
+          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+          printf 'Source commit: %s\nNode image: %s\n' "$SOURCE_COMMIT" "$NODE_IMAGE"
+          uname -a
+          lscpu
+          docker version
+          sha256sum Dockerfile package.json yarn.lock
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          source = Path('Dockerfile').read_text()
+          old = 'FROM node:22-alpine AS base'
+          assert source.count(old) == 1, 'Unexpected Dockerfile base'
+          pinned = source.replace(old, f"FROM {os.environ['NODE_IMAGE']} AS base")
+          target = Path(os.environ['RUNNER_TEMP']) / 'Dockerfile.native-arm64'
+          target.write_text(pinned)
+          print('Diagnostic Dockerfile changes only the base image to the failed run digest.')
+          PY
+          git diff --exit-code
+
+      - name: Set up isolated native BuildKit
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # Same action commit as the failed run
+        timeout-minutes: 3
+        with:
+          version: v0.37.1
+          driver-opts: image=moby/buildkit:v0.33.1
+          buildkitd-flags: --debug
+          cache-binary: false
+          cleanup: true
+
+      - name: Record base image, Node and Yarn evidence
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          docker buildx version
+          docker buildx inspect --bootstrap
+          docker pull --platform linux/arm64 "$NODE_IMAGE"
+          docker image inspect "$NODE_IMAGE" --format '{{json .RepoDigests}} {{.Os}}/{{.Architecture}}'
+          test "$(docker image inspect "$NODE_IMAGE" --format '{{.Architecture}}')" = arm64
+          docker run --rm --platform linux/arm64 --network none "$NODE_IMAGE" sh -ec '
+            uname -m
+            node --version
+            node -p "process.arch"
+            yarn --version
+            test "$(node -p "process.arch")" = arm64
+          '
+
+      - name: Build existing deps target (15 minute cap)
+        id: deps
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --platform linux/arm64 \
+            --file "$RUNNER_TEMP/Dockerfile.native-arm64" \
+            --target deps --no-cache \
+            --progress plain --load \
+            --tag notionnext-native-arm64-deps:diagnostic \
+            . 2>&1 | tee "$RUNNER_TEMP/native-arm64-deps.log"
+
+      - name: Build full ARM64 image only after deps pass
+        id: full
+        if: success() && steps.deps.outcome == 'success'
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --platform linux/arm64 \
+            --file "$RUNNER_TEMP/Dockerfile.native-arm64" \
+            --progress plain --load \
+            --tag notionnext-native-arm64:diagnostic \
+            . 2>&1 | tee "$RUNNER_TEMP/native-arm64-full.log"
+          docker image inspect notionnext-native-arm64:diagnostic --format '{{.Id}} {{.Os}}/{{.Architecture}}'
+          test "$(docker image inspect notionnext-native-arm64:diagnostic --format '{{.Architecture}}')" = arm64
+          git diff --exit-code
+
+      - name: Summarize bounded diagnostic
+        if: always()
+        timeout-minutes: 1
+        env:
+          DEPS_OUTCOME: ${{ steps.deps.outcome }}
+          FULL_OUTCOME: ${{ steps.full.outcome }}
+        run: |
+          {
+            printf 'Source commit: %s\n\n' "$SOURCE_COMMIT"
+            printf 'Base image: %s\n\n' "$NODE_IMAGE"
+            printf 'Runner: ubuntu-24.04-arm (native ARM64 required)\n\n'
+            printf 'Deps target: %s\n\n' "$DEPS_OUTCOME"
+            printf 'Full image: %s\n\n' "$FULL_OUTCOME"
+            printf 'Images stay local to the ephemeral runner. No registry login, push, cache export or deployment secrets.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
