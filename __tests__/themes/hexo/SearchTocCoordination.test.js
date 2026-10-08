@@ -69,9 +69,13 @@ jest.mock('@/themes/hexo/components/Footer', () => () => null)
 jest.mock('@/themes/hexo/components/Hero', () => () => null)
 jest.mock('@/themes/hexo/components/PostHero', () => () => null)
 jest.mock('@/themes/hexo/components/SideRight', () => () => null)
-jest.mock('@/themes/hexo/components/RightFloatArea', () => ({ floatSlot }) => (
-  <div>{floatSlot}</div>
-))
+jest.mock(
+  '@/themes/hexo/components/RightFloatArea',
+  () =>
+    function MockRightFloatArea({ floatSlot }) {
+      return <div>{floatSlot}</div>
+    }
+)
 jest.mock('@/themes/hexo/components/SearchNav', () => () => null)
 jest.mock('@/themes/hexo/components/SlotBar', () => () => null)
 jest.mock('@/themes/hexo/components/TagItemMini', () => () => null)
@@ -150,7 +154,9 @@ function fixture() {
   return render(
     <LayoutBase post={post}>
       <input aria-label='Outside input' />
-      <h2 id={post.toc[0].id}>First heading</h2>
+      <div id={post.toc[0].id} className='notion-header-anchor'>
+        <h2>First heading</h2>
+      </div>
     </LayoutBase>
   )
 }
@@ -388,3 +394,72 @@ it.each(['{Enter}', ' '])(
     expect(trigger).toHaveFocus()
   }
 )
+
+it.each(['Escape', 'close button', 'backdrop'])(
+  'returns search focus to the selected reading anchor after %s dismissal',
+  async dismissal => {
+    fixture()
+    openToc()
+    const anchor = document.getElementById(post.toc[0].id)
+    fireEvent.click(screen.getByRole('link', { name: 'First section' }))
+    await waitFor(() => expect(window.location.hash).toBe(`#${anchor.id}`))
+    expect(anchor).toHaveFocus()
+    const originalHash = window.location.hash
+    const focus = jest.spyOn(anchor, 'focus')
+    shortcut(anchor)
+    await expectDialogBeforeFocus()
+    flushFrame()
+    flushFrame()
+    const search = screen.getByRole('textbox', { name: '搜索关键词' })
+    expect(search).toHaveFocus()
+    if (dismissal === 'Escape') fireEvent.keyDown(search, { key: 'Escape' })
+    else if (dismissal === 'close button')
+      fireEvent.click(screen.getByRole('button', { name: '关闭搜索' }))
+    else fireEvent.click(document.getElementById('algolia-search-backdrop'))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(anchor).toHaveFocus()
+    expect(anchor).toHaveAttribute('tabindex', '-1')
+    expect(focus).toHaveBeenLastCalledWith({ preventScroll: true })
+    expect(window.location.hash).toBe(originalHash)
+    flushFrame()
+    flushFrame()
+    expect(anchor).toHaveFocus()
+  }
+)
+
+it('retains the reading anchor return target across repeated ready search opens', async () => {
+  fixture()
+  openToc()
+  const anchor = document.getElementById(post.toc[0].id)
+  fireEvent.click(screen.getByRole('link', { name: 'First section' }))
+  for (let attempt = 0; attempt < 2; attempt++) {
+    shortcut(anchor)
+    await expectDialogBeforeFocus()
+    flushFrame()
+    flushFrame()
+    fireEvent.keyDown(screen.getByRole('textbox', { name: '搜索关键词' }), {
+      key: 'Escape'
+    })
+    expect(anchor).toHaveFocus()
+  }
+  expect(mockLoads).toHaveBeenCalledTimes(1)
+})
+
+it('returns to the reading anchor after focusing and cancelling pending search', async () => {
+  const gate = deferred()
+  mockImportGate.mockReturnValue(gate.promise)
+  fixture()
+  openToc()
+  const anchor = document.getElementById(post.toc[0].id)
+  fireEvent.click(screen.getByRole('link', { name: 'First section' }))
+  shortcut(anchor)
+  const cancel = screen.getByRole('button', { name: '取消' })
+  cancel.focus()
+  fireEvent.click(cancel)
+  expect(anchor).toHaveFocus()
+  await resolveLoad(gate)
+  flushFrame()
+  flushFrame()
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(anchor).toHaveFocus()
+})

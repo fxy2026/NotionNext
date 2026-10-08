@@ -1,15 +1,25 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import Catalog from './Catalog'
 
 /** The floating contents panel is only used below Hexo's 960px lg breakpoint. */
 const TocDrawer = ({ post, isOpen, onClose, triggerRef }) => {
   const panelRef = useRef(null)
+  const readingTargetRef = useRef(null)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
 
+  const releaseReadingTarget = useCallback(() => {
+    const target = readingTargetRef.current
+    if (target?.getAttribute('tabindex') === '-1') {
+      target.removeAttribute('tabindex')
+    }
+    readingTargetRef.current = null
+  }, [])
+
   useEffect(() => {
     closeRef.current?.()
-  }, [post?.id])
+    return releaseReadingTarget
+  }, [post?.id, releaseReadingTarget])
 
   useEffect(() => {
     if (!isOpen) return
@@ -73,15 +83,12 @@ const TocDrawer = ({ post, isOpen, onClose, triggerRef }) => {
 
     // Keep native hash/history/scroll behavior, and move keyboard reading focus
     // to the destination rather than back to the floating toggle.
+    if (readingTargetRef.current !== target) releaseReadingTarget()
     if (!target.hasAttribute('tabindex')) {
       target.setAttribute('tabindex', '-1')
-      target.addEventListener(
-        'blur',
-        () => target.removeAttribute('tabindex'),
-        {
-          once: true
-        }
-      )
+      // Search may temporarily take focus and then return here. Keep only this
+      // reading target focusable until another selection or article cleanup.
+      readingTargetRef.current = target
     }
     target.focus({ preventScroll: true })
     onClose?.()

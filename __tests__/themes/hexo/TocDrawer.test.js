@@ -236,7 +236,7 @@ describe('Hexo mobile table of contents', () => {
         value: width
       })
       desktop = width >= 960
-      render(<Fixture />)
+      const { unmount } = render(<Fixture />)
       openPanel()
       const heading = document.getElementById(lastId)
       const focus = jest.spyOn(heading, 'focus')
@@ -248,6 +248,8 @@ describe('Hexo mobile table of contents', () => {
       expect(link).toHaveAttribute('href', `#${lastId}`)
       expect(heading).toHaveAttribute('tabindex', '-1')
       screen.getByRole('textbox').focus()
+      expect(heading).toHaveAttribute('tabindex', '-1')
+      unmount()
       expect(heading).not.toHaveAttribute('tabindex')
     }
   )
@@ -265,14 +267,72 @@ describe('Hexo mobile table of contents', () => {
     expect(heading).toHaveFocus()
   })
 
-  it('preserves an existing destination tabindex', () => {
+  it.each(['0', '-1'])(
+    'preserves an authored destination tabindex=%s during cleanup',
+    tabindex => {
+      const { unmount } = render(<Fixture />)
+      openPanel()
+      const heading = document.getElementById(firstId)
+      heading.setAttribute('tabindex', tabindex)
+      fireEvent.click(screen.getByRole('link', { name: 'First section' }))
+      screen.getByRole('textbox').focus()
+      expect(heading).toHaveAttribute('tabindex', tabindex)
+      unmount()
+      expect(heading).toHaveAttribute('tabindex', tabindex)
+    }
+  )
+
+  it('releases the previous owned reading target only when another valid target is selected', () => {
     render(<Fixture />)
+    const first = document.getElementById(firstId)
+    const last = document.getElementById(lastId)
+    openPanel()
+    fireEvent.click(screen.getByRole('link', { name: 'First section' }))
+    openPanel()
+    expect(first).toHaveAttribute('tabindex', '-1')
+    fireEvent.click(screen.getByRole('link', { name: 'Last section' }))
+    expect(first).not.toHaveAttribute('tabindex')
+    expect(last).toHaveAttribute('tabindex', '-1')
+    expect(last).toHaveFocus()
+  })
+
+  it('cleans up its owned tabindex on article change without stealing newer focus', () => {
+    const { rerender } = render(<Fixture />)
     openPanel()
     const heading = document.getElementById(firstId)
-    heading.setAttribute('tabindex', '0')
     fireEvent.click(screen.getByRole('link', { name: 'First section' }))
+    const search = screen.getByRole('textbox')
+    search.focus()
+    expect(heading).toHaveAttribute('tabindex', '-1')
+    rerender(<Fixture currentPost={{ ...post, id: 'new-article' }} />)
+    expect(heading).not.toHaveAttribute('tabindex')
+    expect(search).toHaveFocus()
+  })
+
+  it('preserves a later authored tabindex change when releasing its old target', () => {
+    const { unmount } = render(<Fixture />)
+    openPanel()
+    const heading = document.getElementById(firstId)
+    fireEvent.click(screen.getByRole('link', { name: 'First section' }))
+    heading.setAttribute('tabindex', '0')
     screen.getByRole('textbox').focus()
+    unmount()
     expect(heading).toHaveAttribute('tabindex', '0')
+  })
+
+  it('cleans up a detached reading target without focusing it again', () => {
+    const { unmount } = render(<Fixture />)
+    document.getElementById(firstId).removeAttribute('id')
+    const heading = document.createElement('div')
+    heading.id = firstId
+    document.body.appendChild(heading)
+    openPanel()
+    fireEvent.click(screen.getByRole('link', { name: 'First section' }))
+    heading.remove()
+    const focus = jest.spyOn(heading, 'focus')
+    unmount()
+    expect(heading).not.toHaveAttribute('tabindex')
+    expect(focus).not.toHaveBeenCalled()
   })
 
   it.each(['ctrlKey', 'metaKey', 'shiftKey', 'altKey'])(
