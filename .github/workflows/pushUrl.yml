@@ -21,6 +21,8 @@ on:
 
 jobs:
   bot:
+    # This isolated diagnostic must not send indexing notifications or use secrets.
+    if: github.ref != 'refs/heads/diagnostic/native-arm64-f1a6b33-20261008'
     runs-on: ubuntu-latest # 运行环境为最新版的Ubuntu
     steps:
       - name: 'Checkout codes' # 步骤一，获取仓库代码
