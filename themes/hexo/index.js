@@ -109,7 +109,7 @@ const LayoutBase = props => {
         {/* 顶部嵌入 */}
         <Transition
           show={!onLoading}
-          appear={true}
+          appear={false}
           enter='transition ease-in-out duration-700 transform order-first'
           enterFrom='opacity-0 -translate-y-16'
           enterTo='opacity-100'
@@ -143,7 +143,7 @@ const LayoutBase = props => {
               ) : (
                 <Transition
                   show={isArticleSlugPage ? true : !onLoading}
-                  appear={true}
+                  appear={false}
                   enter='transition ease-in-out duration-700 transform order-first'
                   enterFrom='opacity-0 translate-y-16'
                   enterTo='opacity-100'
