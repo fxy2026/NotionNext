@@ -354,7 +354,12 @@ const getIsoTime = value => {
  */
 const getSEOMeta = (props, router, locale) => {
   const { post, siteInfo, tag, category, page } = props
-  const keyword = router?.query?.s
+  // Static search pages supply keyword in props; /search uses a query string.
+  const searchKeyword =
+    router.route === '/search'
+      ? router?.query?.s
+      : props.keyword ?? router?.query?.keyword
+  const keyword = typeof searchKeyword === 'string' ? searchKeyword : ''
 
   const TITLE = siteConfig('TITLE')
   switch (router.route) {
@@ -416,14 +421,20 @@ const getSEOMeta = (props, router, locale) => {
         type: 'website'
       }
     case '/search/[keyword]':
-    case '/search/[keyword]/page/[page]':
+    case '/search/[keyword]/page/[page]': {
+      const searchPage = page ?? router?.query?.page
+      const pageSuffix =
+        router.route === '/search/[keyword]/page/[page]' && searchPage
+          ? '/page/' + encodeURIComponent(searchPage)
+          : ''
       return {
         title: `${keyword || ''}${keyword ? ' | ' : ''}${locale.NAV.SEARCH} | ${siteInfo?.title}`,
         description: TITLE,
         image: `${siteInfo?.pageCover}`,
-        slug: 'search/' + (keyword || ''),
+        slug: 'search/' + encodeURIComponent(keyword) + pageSuffix,
         type: 'website'
       }
+    }
     case '/404':
       return {
         title: `${siteInfo?.title} | ${locale.NAV.PAGE_NOT_FOUND}`,

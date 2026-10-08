@@ -2,7 +2,7 @@ import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 import { isBrowser } from '@/lib/utils'
-import { formatDateFmt } from '@/lib/utils/formatDate'
+import { getArchiveMonth } from '@/lib/utils/archive'
 import { DynamicLayout } from '@/themes/theme'
 import { useEffect } from 'react'
 
@@ -47,7 +47,7 @@ export async function getStaticProps({ locale }) {
   const archivePosts = {}
 
   postsSortByDate.forEach(post => {
-    const date = formatDateFmt(post.publishDate, 'yyyy-MM')
+    const date = getArchiveMonth(post)
     if (archivePosts[date]) {
       archivePosts[date].push(post)
     } else {

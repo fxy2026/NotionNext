@@ -2,7 +2,7 @@ import NotionIcon from '@/components/NotionIcon'
 import NotionPage from '@/components/NotionPage'
 import TwikooCommentCount from '@/components/TwikooCommentCount'
 import { siteConfig } from '@/lib/config'
-import { formatDateFmt } from '@/lib/utils/formatDate'
+import { getArchiveMonth } from '@/lib/utils/archive'
 import SmartLink from '@/components/SmartLink'
 import TagItemMini from './TagItemMini'
 
@@ -92,7 +92,7 @@ export const BlogPostCardInfo = ({
         <div className='hexo-card-meta text-gray-400 justify-between flex flex-wrap items-center gap-y-3'>
           {/* 日期 */}
           <SmartLink
-            href={`/archive#${formatDateFmt(post?.publishDate, 'yyyy-MM')}`}
+            href={`/archive#${getArchiveMonth(post)}`}
             passHref
             className='font-light menu-link cursor-pointer text-sm leading-4 mr-3 shrink-0'
           >

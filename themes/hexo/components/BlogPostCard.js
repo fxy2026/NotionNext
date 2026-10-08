@@ -1,10 +1,14 @@
 import LazyImage from '@/components/LazyImage'
 import { siteConfig } from '@/lib/config'
 import SmartLink from '@/components/SmartLink'
+import { useRouter } from 'next/router'
 import CONFIG from '../config'
 import { BlogPostCardInfo } from './BlogPostCardInfo'
 
 const BlogPostCard = ({ index, post, showSummary, siteInfo }) => {
+  const router = useRouter()
+  const showHomeBanner =
+    router.route === '/' && siteConfig('HEXO_HOME_BANNER_ENABLE', null, CONFIG)
   const showPreview =
     siteConfig('HEXO_POST_LIST_PREVIEW', null, CONFIG) && post.blockMap
   if (
@@ -45,7 +49,7 @@ const BlogPostCard = ({ index, post, showSummary, siteInfo }) => {
             <SmartLink href={post?.href}>
               <>
                 <LazyImage
-                  priority={index === 1}
+                  priority={index === 0 && !showHomeBanner}
                   alt={post?.title}
                   src={post?.pageCoverThumbnail}
                   className='w-full object-cover object-center group-hover:scale-110 duration-500'

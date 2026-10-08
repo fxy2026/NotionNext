@@ -12,17 +12,27 @@ export default function SearchButton(props) {
   const router = useRouter()
   const { searchModal } = useHexoGlobal()
 
-  function handleSearch() {
+  function handleSearch(event) {
     if (siteConfig('ALGOLIA_APP_ID')) {
-      searchModal.current.openSearch()
+      searchModal.current?.openSearch(event.currentTarget)
     } else {
       router.push('/search')
     }
   }
 
-  return <>
-        <div onClick={handleSearch} title={locale.NAV.SEARCH} alt={locale.NAV.SEARCH} className='cursor-pointer dark:text-white hover:bg-black hover:bg-opacity-10 rounded-full w-10 h-10 flex justify-center items-center duration-200 transition-all'>
-            <i title={locale.NAV.SEARCH} className="fa-solid fa-magnifying-glass" />
-        </div>
-    </>
+  const hasSearchModal = Boolean(siteConfig('ALGOLIA_APP_ID'))
+
+  return (
+    <button
+      type='button'
+      onClick={handleSearch}
+      title={locale.NAV.SEARCH}
+      aria-label={locale.NAV.SEARCH}
+      aria-haspopup={hasSearchModal ? 'dialog' : undefined}
+      aria-controls={hasSearchModal ? 'algolia-search-dialog' : undefined}
+      className='cursor-pointer dark:text-white hover:bg-black hover:bg-opacity-10 rounded-full w-10 h-10 flex justify-center items-center duration-200 transition-all'
+    >
+      <i aria-hidden='true' className='fa-solid fa-magnifying-glass' />
+    </button>
+  )
 }

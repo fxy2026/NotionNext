@@ -2,7 +2,7 @@ import LazyImage from '@/components/LazyImage'
 import NotionIcon from '@/components/NotionIcon'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
-import { formatDateFmt } from '@/lib/utils/formatDate'
+import { getArchiveMonth } from '@/lib/utils/archive'
 import SmartLink from '@/components/SmartLink'
 import TagItemMini from './TagItemMini'
 
@@ -68,7 +68,7 @@ export default function PostHero({ post, siteInfo }) {
               {post?.type !== 'Page' && (
                 <>
                   <SmartLink
-                    href={`/archive#${formatDateFmt(post?.publishDate, 'yyyy-MM')}`}
+                    href={`/archive#${getArchiveMonth(post)}`}
                     passHref
                     className='pl-1 mr-2 cursor-pointer hover:underline'
                   >
