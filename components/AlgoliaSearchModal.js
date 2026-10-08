@@ -35,7 +35,11 @@ const ShortCutActions = [
  * 打开方式 cRef.current.openSearch()
  * https://www.algolia.com/doc/api-reference/search-api-parameters/
  */
-export default function AlgoliaSearchModal({ cRef }) {
+export default function AlgoliaSearchModal({
+  cRef,
+  enableShortcut = true,
+  onReady
+}) {
   const [searchResults, setSearchResults] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [page, setPage] = useState(0)
@@ -49,6 +53,7 @@ export default function AlgoliaSearchModal({ cRef }) {
   const inputRef = useRef(null)
   const dialogRef = useRef(null)
   const returnFocusRef = useRef(null)
+  const restoreFocusOnCloseRef = useRef(true)
   const restoringFocusRef = useRef(false)
   const enterDownRef = useRef(false)
   const router = useRouter()
@@ -78,7 +83,13 @@ export default function AlgoliaSearchModal({ cRef }) {
       return
     }
     returnFocusRef.current = trigger || document.activeElement
+    restoreFocusOnCloseRef.current = true
     setIsModalOpen(true)
+  }
+
+  const closeSearch = ({ restoreFocus = true } = {}) => {
+    restoreFocusOnCloseRef.current = restoreFocus
+    setIsModalOpen(false)
   }
 
   useHotkeys(
@@ -87,7 +98,7 @@ export default function AlgoliaSearchModal({ cRef }) {
       event.preventDefault()
       openSearch()
     },
-    { enableOnFormTags: true },
+    { enableOnFormTags: true, enabled: enableShortcut },
     [isModalOpen]
   )
 
@@ -196,7 +207,7 @@ export default function AlgoliaSearchModal({ cRef }) {
     return () => {
       cancelAnimationFrame(frame)
       document.removeEventListener('keydown', onKeyDown)
-      if (returnTarget?.isConnected) {
+      if (restoreFocusOnCloseRef.current && returnTarget?.isConnected) {
         // Some themes open search on input focus; restoration must not reopen it.
         restoringFocusRef.current = true
         try {
@@ -208,7 +219,11 @@ export default function AlgoliaSearchModal({ cRef }) {
     }
   }, [isModalOpen, resetSearch])
 
-  useImperativeHandle(cRef, () => ({ openSearch }))
+  useImperativeHandle(cRef, () => ({ openSearch, closeSearch }))
+
+  useEffect(() => {
+    onReady?.()
+  }, [onReady])
 
   const client = algoliasearch(
     siteConfig('ALGOLIA_APP_ID'),
@@ -361,7 +376,7 @@ export default function AlgoliaSearchModal({ cRef }) {
         </div>
         {searchResults.length === 0 && keyword && !isLoading && (
           <div>
-            <p className=' text-slate-600 text-center my-4 text-base'>
+            <p className='text-slate-600 dark:text-slate-300 text-center my-4 text-base'>
               {' '}
               无法找到相关结果
               <span className='font-semibold'>&quot;{keyword}&quot;</span>

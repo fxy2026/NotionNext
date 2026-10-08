@@ -559,3 +559,19 @@ describe('Algolia search keyboard accessibility', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
+
+it('preserves light styling and gives empty search results readable dark text', async () => {
+  search.mockResolvedValue({
+    hits: [],
+    nbHits: 0,
+    nbPages: 0,
+    processingTimeMS: 1
+  })
+  render(<Fixture />)
+  await openSearch()
+  await populateResults()
+  expect(screen.getByText(/无法找到相关结果/)).toHaveClass(
+    'text-slate-600',
+    'dark:text-slate-300'
+  )
+})

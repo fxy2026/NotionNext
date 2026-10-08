@@ -16,10 +16,20 @@ const TocDrawerButton = props => {
   }
   return (
     <button
+      ref={props.triggerRef}
       type='button'
       aria-label={locale.COMMON.TABLE_OF_CONTENTS}
+      aria-controls='hexo-toc-drawer'
+      aria-expanded={!!props.isOpen}
       onClick={props.onClick}
-      className='py-2 px-3 cursor-pointer transform duration-200 flex justify-center items-center w-7 h-7 text-center'
+      onKeyDown={event => {
+        if (props.isOpen && event.key === 'Escape' && !event.defaultPrevented) {
+          event.preventDefault()
+          event.stopPropagation()
+          props.onClose?.()
+        }
+      }}
+      className='p-2 cursor-pointer transform duration-200 flex justify-center items-center w-11 h-11 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
       title={locale.COMMON.TABLE_OF_CONTENTS}
     >
       <i aria-hidden='true' className='fas fa-list-ol text-xs' />

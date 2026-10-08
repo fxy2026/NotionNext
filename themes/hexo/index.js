@@ -6,10 +6,16 @@ import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { isBrowser } from '@/lib/utils'
 import { Transition } from '@headlessui/react'
-import dynamic from 'next/dynamic'
 import SmartLink from '@/components/SmartLink'
 import { useRouter } from 'next/router'
-import { createContext, useContext, useEffect, useRef } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import ArticleAdjacent from './components/ArticleAdjacent'
 import ArticleCopyright from './components/ArticleCopyright'
 import { ArticleLock } from './components/ArticleLock'
@@ -32,13 +38,9 @@ import TagItemMini from './components/TagItemMini'
 import TocDrawer from './components/TocDrawer'
 import TocDrawerButton from './components/TocDrawerButton'
 import ArticleSwitchPlaceholder from './components/ArticleSwitchPlaceholder'
+import LazyAlgoliaSearchModal from './components/LazyAlgoliaSearchModal'
 import CONFIG from './config'
 import { Style } from './style'
-
-const AlgoliaSearchModal = dynamic(
-  () => import('@/components/AlgoliaSearchModal'),
-  { ssr: false }
-)
 
 // 主题全局状态
 const ThemeGlobalHexo = createContext()
@@ -71,8 +73,15 @@ const LayoutBase = props => {
     <Hero {...props} />
   ) : null
 
-  const drawerRight = useRef(null)
-  const tocRef = isBrowser ? document.getElementById('article-wrapper') : null
+  const [showToc, setShowToc] = useState(false)
+  const tocTriggerRef = useRef(null)
+  const prepareSearchOpen = useCallback(opener => {
+    setShowToc(false)
+    // A TOC link becomes hidden on dismissal; return search focus to its toggle.
+    return opener?.closest?.('#hexo-toc-drawer')
+      ? tocTriggerRef.current
+      : opener
+  }, [])
 
   // 悬浮按钮内容
   const floatSlot = (
@@ -80,9 +89,15 @@ const LayoutBase = props => {
       {post?.toc?.length > 1 && (
         <div className='block lg:hidden'>
           <TocDrawerButton
+            triggerRef={tocTriggerRef}
+            isOpen={showToc}
             onClick={() => {
-              drawerRight?.current?.handleSwitchVisible()
+              if (!showToc) {
+                searchModal.current?.closeSearch?.({ restoreFocus: false })
+              }
+              setShowToc(open => !open)
             }}
+            onClose={() => setShowToc(false)}
           />
         </div>
       )}
@@ -166,14 +181,25 @@ const LayoutBase = props => {
         </main>
 
         <div className='block lg:hidden'>
-          <TocDrawer post={post} cRef={drawerRight} targetRef={tocRef} />
+          <TocDrawer
+            post={post}
+            isOpen={showToc}
+            onClose={() => setShowToc(false)}
+            triggerRef={tocTriggerRef}
+          />
         </div>
 
         {/* 悬浮菜单 */}
         <RightFloatArea floatSlot={floatSlot} />
 
         {/* 全文搜索 */}
-        <AlgoliaSearchModal cRef={searchModal} {...props} />
+        {Boolean(siteConfig('ALGOLIA_APP_ID')) && (
+          <LazyAlgoliaSearchModal
+            {...props}
+            cRef={searchModal}
+            onBeforeOpen={prepareSearchOpen}
+          />
+        )}
 
         {/* 页脚 */}
         <Footer title={siteConfig('TITLE')} />
