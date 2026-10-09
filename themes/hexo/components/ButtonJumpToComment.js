@@ -25,12 +25,15 @@ const ButtonJumpToComment = () => {
   }
 
   return (
-    <div
-      className='flex space-x-1 items-center justify-center transform hover:scale-105 duration-200 w-7 h-7 text-center'
+    <button
+      type='button'
+      aria-label='Jump to Comment'
+      className='flex space-x-1 items-center justify-center transform hover:scale-105 duration-200 w-11 h-11 lg:w-7 lg:h-7 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
       onClick={navToComment}
-      title='Jump to Comment'>
-      <i className='fas fa-comment text-xs' />
-    </div>
+      title='Jump to Comment'
+    >
+      <i aria-hidden='true' className='fas fa-comment text-xs' />
+    </button>
   )
 }
 

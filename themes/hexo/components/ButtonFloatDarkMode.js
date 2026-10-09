@@ -24,16 +24,20 @@ export default function ButtonDarkModeFloat() {
   }
 
   return (
-    <div
+    <button
+      type='button'
+      aria-label={`${isDarkMode ? 'Light Mode' : 'Dark Mode'}`}
       onClick={handleChangeDarkMode}
       title={`${isDarkMode ? 'Light Mode' : 'Dark Mode'}`}
       className={
-        'justify-center items-center w-7 h-7 text-center transform hover:scale-105 duration-200'
-      }>
+        'flex justify-center items-center w-11 h-11 lg:w-7 lg:h-7 text-center transform hover:scale-105 duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
+      }
+    >
       <i
+        aria-hidden='true'
         id='darkModeButton'
         className={`${isDarkMode ? 'fa-sun' : 'fa-moon'} fas text-xs`}
       />
-    </div>
+    </button>
   )
 }

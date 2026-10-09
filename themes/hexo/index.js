@@ -75,8 +75,11 @@ const LayoutBase = props => {
 
   const [showToc, setShowToc] = useState(false)
   const tocTriggerRef = useRef(null)
+  const readingToolsRef = useRef(null)
   const prepareSearchOpen = useCallback(opener => {
     setShowToc(false)
+    const toolsTrigger = readingToolsRef.current?.closeForSearch?.(opener)
+    if (toolsTrigger) return toolsTrigger
     // A TOC link becomes hidden on dismissal; return search focus to its toggle.
     return opener?.closest?.('#hexo-toc-drawer')
       ? tocTriggerRef.current
@@ -185,12 +188,17 @@ const LayoutBase = props => {
             post={post}
             isOpen={showToc}
             onClose={() => setShowToc(false)}
+            onNavigate={() => readingToolsRef.current?.closeMobileTools?.()}
             triggerRef={tocTriggerRef}
           />
         </div>
 
         {/* 悬浮菜单 */}
-        <RightFloatArea floatSlot={floatSlot} />
+        <RightFloatArea
+          floatSlot={floatSlot}
+          cRef={readingToolsRef}
+          onCloseToc={() => setShowToc(false)}
+        />
 
         {/* 全文搜索 */}
         {Boolean(siteConfig('ALGOLIA_APP_ID')) && (
@@ -372,37 +380,34 @@ const LayoutSlug = props => {
  * @param {*} props
  * @returns
  */
-const Layout404 = props => {
-  const router = useRouter()
+const Layout404 = () => {
   const { locale } = useGlobal()
-  useEffect(() => {
-    // 延时3秒如果加载失败就返回首页
-    setTimeout(() => {
-      if (isBrowser) {
-        const article = document.querySelector(
-          '#article-wrapper #notion-article'
-        )
-        if (!article) {
-          router.push('/').then(() => {
-            // console.log('找不到页面', router.asPath)
-          })
-        }
-      }
-    }, 3000)
-  })
+  const recoveryLinkClassName =
+    'inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
+
   return (
-    <>
-      <div className='text-black w-full h-screen text-center justify-center content-center items-center flex flex-col'>
-        <div className='dark:text-gray-200'>
-          <h2 className='inline-block border-r-2 border-gray-600 mr-2 px-3 py-2 align-top'>
-            404
-          </h2>
-          <div className='inline-block text-left h-32 leading-10 items-center'>
-            <h2 className='m-0 p-0'>{locale.COMMON.NOT_FOUND}</h2>
-          </div>
-        </div>
+    <div className='text-black dark:text-gray-200 w-full min-h-screen px-4 py-16 text-center justify-center items-center flex flex-col'>
+      <div>
+        <h1 className='inline-block border-r-2 border-gray-600 mr-2 px-3 py-2 align-top'>
+          404
+        </h1>
+        <p className='inline-block m-0 p-0 leading-10'>
+          {locale.COMMON.NOT_FOUND}
+        </p>
       </div>
-    </>
+      <div className='mt-6 flex flex-wrap justify-center gap-4'>
+        <SmartLink href='/' prefetch={false} className={recoveryLinkClassName}>
+          {locale.NAV.INDEX}
+        </SmartLink>
+        <SmartLink
+          href='/search'
+          prefetch={false}
+          className={recoveryLinkClassName}
+        >
+          {locale.NAV.SEARCH}
+        </SmartLink>
+      </div>
+    </div>
   )
 }
 
