@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import Catalog from './Catalog'
 
 /** The floating contents panel is only used below Hexo's 960px lg breakpoint. */
-const TocDrawer = ({ post, isOpen, onClose, triggerRef }) => {
+const TocDrawer = ({ post, isOpen, onClose, onNavigate, triggerRef }) => {
   const panelRef = useRef(null)
   const readingTargetRef = useRef(null)
   const closeRef = useRef(onClose)
@@ -92,6 +92,7 @@ const TocDrawer = ({ post, isOpen, onClose, triggerRef }) => {
     }
     target.focus({ preventScroll: true })
     onClose?.()
+    onNavigate?.()
   }
 
   return (
