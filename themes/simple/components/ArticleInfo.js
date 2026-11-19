@@ -27,7 +27,7 @@ export default function ArticleInfo (props) {
                     <div className="space-x-3 mr-4">
                         <span> <i className="fa-regular fa-user"></i> <a href={siteConfig('SIMPLE_AUTHOR_LINK', null, CONFIG)}>{siteConfig('AUTHOR')}</a></span>
                         <span> <i className="fa-regular fa-clock"></i> {post?.publishDay}</span>
-                        {post?.category && <span>  <i className="fa-regular fa-folder"></i> <a href={`/category/${post?.category}`} className="hover:text-red-400 transition-all duration-200">{post?.category}</a></span>}
+                        {post?.category && <span>  <i className="fa-regular fa-folder"></i> <SmartLink href={`/category/${post?.category}`} className="hover:text-red-400 transition-all duration-200">{post?.category}</SmartLink></span>}
                         {post?.tags && post?.tags?.length > 0 && post?.tags.map(t => <span key={t}> / <SmartLink href={`/tag/${t}`}><span className=' hover:text-red-400 transition-all duration-200'>{t}</span></SmartLink></span>)}
                     </div>)}
 
